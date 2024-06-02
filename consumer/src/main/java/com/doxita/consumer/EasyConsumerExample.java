@@ -2,10 +2,16 @@ package com.doxita.consumer;
 
 import com.doxita.common.model.User;
 import com.doxita.common.service.UserService;
+import com.doxita.rpc.proxy.ServiceProxyFactory;
+import com.doxita.rpc.registry.LocalRegistry;
+
+import java.lang.reflect.InvocationTargetException;
 
 public class EasyConsumerExample {
-    public static void main(String[] args) {
-        UserService userService = null;
+    public static void main(String[] args) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+//        Class<?> aClass = LocalRegistry.get(UserService.class.getName());
+//        UserService userService = (UserService) aClass.getDeclaredConstructor().newInstance();
+        UserService userService = ServiceProxyFactory.getProxy(UserService.class);
         User user = new User();
         user.setName("doxita");
         User user1 = userService.getUser(user);

@@ -8,7 +8,6 @@ public class LocalRegistry {
      * 存储注册信息
      */
     public static final Map<String, Class<?>> map = new ConcurrentHashMap<>();
-    
     /**
      * 服务注册
      * @param serviceName 服务名
