@@ -1,0 +1,2 @@
+kryo=com.doxita.rpc.serializer.KryoSerializer
+json=com.doxita.rpc.serializer.JsonSerializer

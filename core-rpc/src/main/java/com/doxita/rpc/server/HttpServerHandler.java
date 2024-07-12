@@ -1,10 +1,12 @@
 package com.doxita.rpc.server;
 
+import com.doxita.RpcApplication;
 import com.doxita.rpc.model.RpcRequest;
 import com.doxita.rpc.model.RpcResponse;
 import com.doxita.rpc.registry.LocalRegistry;
 import com.doxita.rpc.serializer.JdkSerializer;
 import com.doxita.rpc.serializer.Serializer;
+import com.doxita.rpc.serializer.SerializerFactory;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
@@ -13,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ServiceLoader;
 
 @Slf4j
 public class HttpServerHandler implements Handler<HttpServerRequest> {
@@ -23,20 +26,26 @@ public class HttpServerHandler implements Handler<HttpServerRequest> {
      */
     @Override
     public void handle(HttpServerRequest httpServerRequest) {
-        final Serializer serializer = new JdkSerializer();
+//        Serializer serializer = null;
+//        ServiceLoader<Serializer> load = ServiceLoader.load(Serializer.class);
+//        for(Serializer serializer1 : load){
+//            serializer = serializer1;
+//        }
+        Serializer finalSerializer = SerializerFactory.getSerializer(RpcApplication.getRpcConfig().getSerializer());
         log.info("received request: {},{}",httpServerRequest.method(),httpServerRequest.uri());
+        log.debug("serializer:{}",finalSerializer.getClass().getName());
         httpServerRequest.bodyHandler(body ->{
             byte[] bytes = body.getBytes();
             RpcRequest rpcRequest = null;
             try {
-                rpcRequest = serializer.deserialize(bytes, RpcRequest.class);
+                rpcRequest = finalSerializer.deserialize(bytes, RpcRequest.class);
             } catch (IOException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
             RpcResponse rpcResponse = new RpcResponse();
             if(rpcRequest == null){
                 rpcResponse.setMessage("RPC request is null");
-                doResponse(httpServerRequest,rpcResponse,serializer);
+                doResponse(httpServerRequest,rpcResponse, finalSerializer);
                 return;
             }
             
@@ -45,7 +54,7 @@ public class HttpServerHandler implements Handler<HttpServerRequest> {
                 Class<?> implClass = LocalRegistry.get(rpcRequest.getServiceName());
                 Method method = implClass.getMethod(rpcRequest.getMethodName(), rpcRequest.getParameterTypes());
                 Object result = method.invoke(implClass.newInstance(), rpcRequest.getArgs());
-                
+                log.info("invoke method: {}, result: {}",method.getName(),result);
                 rpcResponse.setData(result);
                 rpcResponse.setDataType(method.getReturnType());
                 rpcResponse.setMessage("OK");
@@ -56,7 +65,7 @@ public class HttpServerHandler implements Handler<HttpServerRequest> {
                 throw new RuntimeException(e);
             }
             
-            doResponse(httpServerRequest,rpcResponse,serializer);
+            doResponse(httpServerRequest,rpcResponse, finalSerializer);
         });
     }
     
@@ -72,6 +81,7 @@ public class HttpServerHandler implements Handler<HttpServerRequest> {
         
         try {
             byte[] serialized = serializer.serialize(rpcResponse);
+            log.info("response: {}",rpcResponse);
             httpServerResponse.end(Buffer.buffer(serialized));
         } catch (IOException e) {
             httpServerResponse.end(Buffer.buffer());

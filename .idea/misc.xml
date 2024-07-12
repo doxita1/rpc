@@ -10,6 +10,9 @@
         <option value="$PROJECT_DIR$/easy-rpc/pom.xml" />
         <option value="$PROJECT_DIR$/common/src/main/resources/archetype-resources/pom.xml" />
         <option value="$PROJECT_DIR$/consumer/src/main/resources/archetype-resources/pom.xml" />
+        <option value="$PROJECT_DIR$/rpc-provider/pom.xml" />
+        <option value="$PROJECT_DIR$/rpc-consumer/pom.xml" />
+        <option value="$PROJECT_DIR$/core-rpc/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">

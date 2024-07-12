@@ -1,0 +1,2 @@
+jdk=com.doxita.rpc.serializer.JdkSerializer
+hessian=com.doxita.rpc.serializer.HessianSerializer

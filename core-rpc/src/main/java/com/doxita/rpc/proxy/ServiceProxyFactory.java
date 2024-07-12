@@ -1,5 +1,7 @@
 package com.doxita.rpc.proxy;
 
+import com.doxita.RpcApplication;
+
 import java.lang.reflect.Proxy;
 
 /**
@@ -21,12 +23,27 @@ public class ServiceProxyFactory {
      * InvocationHandler h: 这是一个实现了 InvocationHandler 接口的实例。此处理器的 invoke 方法将拦截对代理实例的方法调用。
      *      在 RPC 框架中，这个处理器通常负责实现方法调用的网络传输，即将本地调用转换为网络请求。
      */
+    // 获取代理
     public static <T> T getProxy(Class<T> serviceClass) {
+        if (RpcApplication.getRpcConfig().isMock()){
+            return getMockProxy(serviceClass);
+        }
+        
         //确保 serviceClass 是一个接口，因为 Java 动态代理只能代理接口。
         return (T) Proxy.newProxyInstance(
                 serviceClass.getClassLoader(),
                 new Class[]{serviceClass},
                 new ServiceProxy()
+        );
+    }
+    
+    
+    // 获取 Mock 代理
+    public static <T> T getMockProxy(Class<T> serviceClass) {
+        return (T) Proxy.newProxyInstance(
+                serviceClass.getClassLoader(),
+                new Class[]{serviceClass},
+                new MockServiceProxy()
         );
     }
 }

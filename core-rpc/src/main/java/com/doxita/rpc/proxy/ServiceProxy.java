@@ -2,10 +2,13 @@ package com.doxita.rpc.proxy;
 
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
+import com.doxita.RpcApplication;
+import com.doxita.config.RpcConfig;
 import com.doxita.rpc.model.RpcRequest;
 import com.doxita.rpc.model.RpcResponse;
 import com.doxita.rpc.serializer.JdkSerializer;
 import com.doxita.rpc.serializer.Serializer;
+import com.doxita.rpc.serializer.SerializerFactory;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -32,7 +35,8 @@ public class ServiceProxy implements InvocationHandler {
      */
     @Override
     public Object invoke(Object proxy, Method method, Object[] args){
-        Serializer serializer = new JdkSerializer();
+//        Serializer serializer = new JdkSerializer();
+        Serializer serializer = SerializerFactory.getSerializer(RpcApplication.getRpcConfig().getSerializer());
         //method.getDeclaringClass().getName() 用于获取声明某个方法的类的完全限定名称。
         RpcRequest rpcRequest = RpcRequest.builder()
                 .serviceName(method.getDeclaringClass().getName())
@@ -42,7 +46,7 @@ public class ServiceProxy implements InvocationHandler {
                 .build();
         try {
             byte[] bodyBytes = serializer.serialize(rpcRequest);
-            try (HttpResponse httpResponse = HttpRequest.post("http://localhost:8082")
+            try (HttpResponse httpResponse = HttpRequest.post("http://localhost:8081")
                     .body(bodyBytes)
                     .execute()) {
                 byte[] result = httpResponse.bodyBytes();
