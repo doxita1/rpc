@@ -1,6 +1,9 @@
 package com.doxita;
 
+import com.doxita.config.RegistryConfig;
 import com.doxita.config.RpcConfig;
+import com.doxita.rpc.registry.Registry;
+import com.doxita.rpc.registry.RegistryFactory;
 import com.doxita.utils.ConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,7 +17,14 @@ public class RpcApplication {
     
     public static void init(RpcConfig newRpcConfig){
         rpcConfig = newRpcConfig;
-        log.info("rpc config init success: {}", rpcConfig);
+        log.info("rpc config init success: {}", rpcConfig.toString());
+        
+        RegistryConfig registryConfig = newRpcConfig.getRegistryConfig();
+        Registry registry = RegistryFactory.getRegistry(registryConfig.getRegistry());
+        registry.init(registryConfig);
+        
+        log.info("rpc registry init success: {}", registryConfig);
+        
     }
     
     public static void init(){

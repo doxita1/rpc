@@ -30,7 +30,7 @@ public class RpcConfig {
     /**
      * 版本号
      */
-    private String version = "1.0";
+    private String version = "1.0.0";
     
     /**
      * 是否开启mock
@@ -41,4 +41,9 @@ public class RpcConfig {
      * 序列化方式
      */
     private String serializer;
+    
+    /**
+     * 注册中心配置
+     */
+    private RegistryConfig registryConfig = new RegistryConfig();
 }

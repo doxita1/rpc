@@ -25,7 +25,7 @@ public class SpiLoader {
     /**
      * 存储已经加载的类 接口->(key->实现类)
      */
-    private static Map<String, Map<String, Class<?>>> loaderMap = new ConcurrentHashMap<>();
+    private static final Map<String, Map<String, Class<?>>> loaderMap = new ConcurrentHashMap<>();
     
     /**
      * 存储已经实例化的对象
