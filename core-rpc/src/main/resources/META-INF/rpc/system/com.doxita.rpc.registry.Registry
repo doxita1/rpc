@@ -1,1 +1,2 @@
 etcd=com.doxita.rpc.registry.EtcdRegistry
+zookeeper=com.doxita.rpc.registry.ZooKeeperRegistry

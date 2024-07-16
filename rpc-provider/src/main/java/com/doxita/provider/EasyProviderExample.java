@@ -20,7 +20,7 @@ public class EasyProviderExample {
 //        System.out.println(LocalRegistry.map);
 //        HttpServer httpServer = new VertxHttpServer();
 //        httpServer.doStart(8082);
-        RpcApplication.init();
+//        RpcApplication.init();
         
         String serviceName = UserService.class.getName();
         LocalRegistry.register(serviceName,UserServiceImpl.class);

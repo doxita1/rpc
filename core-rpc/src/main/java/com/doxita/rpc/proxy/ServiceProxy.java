@@ -73,8 +73,6 @@ public class ServiceProxy implements InvocationHandler {
             }
             // 随机选择一个, 选择第一个
             ServiceMetaInfo selectedServiceInfo = serviceMetaInfoList.get(0);
-            
-            
             try (HttpResponse httpResponse = HttpRequest.post(selectedServiceInfo.getServiceAddress())
                     .body(bodyBytes)
                     .execute()) {

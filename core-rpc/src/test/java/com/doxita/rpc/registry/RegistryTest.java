@@ -16,7 +16,7 @@ public class RegistryTest extends TestCase {
     
     public static final Registry registry = new EtcdRegistry();
     
-    @Before
+    @Test
     public void init() {
         RegistryConfig registryConfig = new RegistryConfig();
         registryConfig.setRegistryAddress("http://localhost:2379");
@@ -103,4 +103,11 @@ public class RegistryTest extends TestCase {
     @Test
     public void testDestroy() {
     }
+    
+    @Test
+    public void testHeartBeat() throws InterruptedException {
+        testRegister();
+        Thread.sleep(100000);
+    }
+    
 }
