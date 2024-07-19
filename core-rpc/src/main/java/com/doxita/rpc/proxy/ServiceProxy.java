@@ -11,6 +11,7 @@ import com.doxita.rpc.registry.Registry;
 import com.doxita.rpc.registry.RegistryFactory;
 import com.doxita.rpc.serializer.Serializer;
 import com.doxita.rpc.serializer.SerializerFactory;
+import com.doxita.rpc.server.tcp.VertxTcpClient;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.NetClient;
@@ -85,60 +86,9 @@ public Object invoke(Object proxy, Method method, Object[] args) {
         // 选择第一个服务提供者
         // 随机选择一个, 选择第一个
         ServiceMetaInfo selectedServiceInfo = serviceMetaInfoList.get(0);
-        // 使用TCP发送RPC请求
-        // 发送http请求
-        Vertx vertx = Vertx.vertx();
-        NetClient netClient = vertx.createNetClient();
-        CompletableFuture<RpcResponse> responseFuture = new CompletableFuture<>();
         
-        // 连接服务提供者
-        netClient.connect(selectedServiceInfo.getServicePort(), selectedServiceInfo.getServiceHost(), result -> {
-            if (result.succeeded()) {
-                log.info("TCP连接成功");
-                NetSocket netSocket = result.result();
-                // 构建协议消息
-                ProtocolMessage<RpcRequest> protocolMessage = ProtocolMessage.<RpcRequest>builder()
-                        .body(rpcRequest)
-                        .header(ProtocolMessage.Header.builder()
-                                .magic(PROTOCOL_MAGIC)
-                                .version(PROTOCOL_VERSION)
-                                .type((byte) ProtocolMessageTypeEnum.REQUEST.getCode())
-                                .status((byte) ProtocolMessageStatusEnum.OK.getCode())
-                                .serializer((byte) ProtocolMessageSerializerEnum.JDK.getKey())
-                                .requestId(IdUtil.getSnowflakeNextId())
-                                .build()
-                        ).build();
-                log.info("发送请求{}", protocolMessage);
-                
-                try {
-                    // 编码协议消息并发送
-                    Buffer buffer = ProtocolMessageEncoder.encode(protocolMessage);
-                    netSocket.write(buffer);
-                    log.info("发送成功");
-                } catch (IOException e) {
-                    log.info("编码失败");
-                    throw new RuntimeException("协议消息编码错误");
-                }
-                
-                // 处理响应
-                netSocket.handler(buffer -> {
-                    try {
-                        ProtocolMessage<RpcResponse> responseProtocolMessage = (ProtocolMessage<RpcResponse>) ProtocolMessageDecoder.decode(buffer);
-                        log.info("收到响应{}", responseProtocolMessage);
-                        responseFuture.complete(responseProtocolMessage.getBody());
-                    } catch (IOException | ClassNotFoundException e) {
-                        log.info("解码失败");
-                        throw new RuntimeException("协议消息解码错误");
-                    }
-                });
-                
-            }else {
-                log.info("TCP连接失败");
-            }
-        });
-        // 等待响应
-        RpcResponse rpcResponse = responseFuture.get();
-        netClient.close();
+        // 发送请求
+        RpcResponse rpcResponse = VertxTcpClient.dpRequest(rpcRequest, selectedServiceInfo);
         // 处理响应中的异常
         if (rpcResponse.getException() != null) {
             throw rpcResponse.getException();

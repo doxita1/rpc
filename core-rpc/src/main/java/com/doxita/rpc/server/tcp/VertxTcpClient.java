@@ -1,50 +1,111 @@
 package com.doxita.rpc.server.tcp;
 
+import cn.hutool.core.util.IdUtil;
+import com.doxita.common.model.ServiceMetaInfo;
+import com.doxita.rpc.model.RpcRequest;
+import com.doxita.rpc.model.RpcResponse;
+import com.doxita.rpc.protocol.*;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.net.NetClient;
 import io.vertx.core.net.NetSocket;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+import static com.doxita.rpc.protocol.ProtocolConstant.PROTOCOL_MAGIC;
+import static com.doxita.rpc.protocol.ProtocolConstant.PROTOCOL_VERSION;
+
 @Slf4j
 public class VertxTcpClient {
+
     /**
-     * 启动客户端以连接到服务器。
-     * 该方法创建一个Vert.x实例，并使用该实例创建一个网络客户端，尝试连接到本地主机的8888端口。
-     * 如果连接成功，它将向服务器发送一条消息，并设置一个处理器以接收服务器发送的数据。
-     * 如果连接失败，它将记录错误信息。
+     * 根据提供的RpcRequest和ServiceMetaInfo，通过Vert.x的TCP客户端发送远程过程调用请求，并等待响应。
+     *
+     * @param rpcRequest RPC请求对象，包含调用的服务方法名和参数等信息。
+     * @param serviceMetaInfo 服务元数据信息，包含服务的主机地址和端口号等。
+     * @return RpcResponse RPC响应对象，包含调用结果。
+     * @throws ExecutionException 如果在Future中完成时抛出异常。
+     * @throws InterruptedException 如果线程被中断。
      */
-    public void start() {
-        // 创建一个Vert.x实例
+    public static RpcResponse dpRequest(RpcRequest rpcRequest, ServiceMetaInfo serviceMetaInfo) throws ExecutionException, InterruptedException {
+        // 创建Vert.x实例
         Vertx vertx = Vertx.vertx();
-        
-        // 创建一个网络客户端，并尝试连接到服务器
-        vertx.createNetClient().connect(8888, "127.0.0.1", result -> {
-            // 连接成功时的操作
+        // 创建NetClient实例用于TCP连接
+        NetClient netClient = vertx.createNetClient();
+        // 创建CompletableFuture用于异步接收RPC响应
+        CompletableFuture<RpcResponse> responseFuture = new CompletableFuture<>();
+    
+        // 尝试连接服务提供者的主机和端口
+        // 连接服务提供者
+        netClient.connect(serviceMetaInfo.getServicePort(), serviceMetaInfo.getServiceHost(), result -> {
             if (result.succeeded()) {
-                // 记录连接成功的日志信息
-                log.info("Connected!,{}", result.result());
-                // 获取连接的套接字
-                NetSocket socket = result.result();
-                // 向服务器发送消息
-                socket.write("Hello from client");
-                // 设置数据接收处理器
-                socket.handler(data -> {
-                    // 输出从服务器接收的数据
-                    System.out.println("Got data from server: " + data.toString("ISO-8859-1"));
-                    // 记录从服务器接收的数据的日志信息
-                    log.info("Got data from server: {}", data.toString("ISO-8859-1"));
+                // 连接成功日志
+                log.info("TCP连接成功");
+                // 获取连接的NetSocket对象
+                NetSocket netSocket = result.result();
+                // 构建协议消息，包括请求头和请求体
+                // 构建协议消息
+                ProtocolMessage<RpcRequest> protocolMessage = ProtocolMessage.<RpcRequest>builder()
+                        .body(rpcRequest)
+                        .header(ProtocolMessage.Header.builder()
+                                .magic(PROTOCOL_MAGIC)
+                                .version(PROTOCOL_VERSION)
+                                .type((byte) ProtocolMessageTypeEnum.REQUEST.getCode())
+                                .status((byte) ProtocolMessageStatusEnum.OK.getCode())
+                                .serializer((byte) ProtocolMessageSerializerEnum.JDK.getKey())
+                                .requestId(IdUtil.getSnowflakeNextId())
+                                .build()
+                        ).build();
+                // 发送请求日志
+                log.info("发送请求{}", protocolMessage);
+                
+                try {
+                    // 编码协议消息为Buffer并发送到服务器
+                    // 编码协议消息并发送
+                    Buffer buffer = ProtocolMessageEncoder.encode(protocolMessage);
+                    netSocket.write(buffer);
+                    // 发送成功日志
+                    log.info("发送成功");
+                } catch (IOException e) {
+                    // 编码失败日志
+                    log.info("编码失败");
+                    // 抛出运行时异常
+                    throw new RuntimeException("协议消息编码错误");
+                }
+                
+                // 设置NetSocket的处理器，用于接收服务器的响应
+                // 处理响应
+                TcpBufferHandlerWrapper bufferHandlerWrapper = new TcpBufferHandlerWrapper(buffer -> {
+                    try {
+                        // 解码Buffer为协议消息
+                        ProtocolMessage<RpcResponse> responseProtocolMessage = (ProtocolMessage<RpcResponse>) ProtocolMessageDecoder.decode(buffer);
+                        // 接收到响应日志
+                        log.info("收到响应{}", responseProtocolMessage);
+                        // 完成CompletableFuture，传递响应体
+                        responseFuture.complete(responseProtocolMessage.getBody());
+                    } catch (IOException | ClassNotFoundException e) {
+                        // 解码失败日志
+                        log.info("解码失败");
+                        // 抛出运行时异常
+                        throw new RuntimeException("协议消息解码错误");
+                    }
                 });
+                // 设置NetSocket的处理器为bufferHandlerWrapper
+                netSocket.handler(bufferHandlerWrapper);
             } else {
-                // 连接失败时的操作
-                // 记录连接失败的日志信息
-                log.error("Failed to connect: {}", result.cause());
-                // 输出连接失败的信息
-                System.out.println("Failed to connect: " + result.cause());
+                // 连接失败日志
+                log.info("TCP连接失败");
             }
         });
-    }
-
-    public static void main(String[] args) {
-        VertxTcpClient vertxTcpClient = new VertxTcpClient();
-        vertxTcpClient.start();
+        // 等待响应，通过get方法阻塞当前线程直到CompletableFuture完成
+        // 等待响应
+        RpcResponse rpcResponse = responseFuture.get();
+        // 关闭NetClient
+        netClient.close();
+        // 返回响应对象
+        return rpcResponse;
     }
 }
