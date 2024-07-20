@@ -1,7 +1,11 @@
 package com.doxita;
 
 import cn.hutool.core.util.IdUtil;
+import com.doxita.common.model.ServiceMetaInfo;
 import com.doxita.constant.RpcConstant;
+import com.doxita.loadbalancer.LoadBalancer;
+import com.doxita.loadbalancer.LoadBalancerFactory;
+import com.doxita.loadbalancer.LoadBalancerKeys;
 import com.doxita.rpc.model.RpcRequest;
 import com.doxita.rpc.protocol.*;
 import com.doxita.rpc.serializer.Serializer;
@@ -15,6 +19,8 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -103,6 +109,50 @@ public class AppTest
         ProtocolMessage<?> decode = ProtocolMessageDecoder.decode(encode);
         System.out.println(decode);
         
+        
+    }
+    
+    public void testLoadBalancer() {
+        Map<String,Object> requestParams = Map.of("name","doxita");
+        ServiceMetaInfo serviceMetaInfo = new ServiceMetaInfo();
+        serviceMetaInfo.setServiceName("myService");
+        serviceMetaInfo.setServiceVersion(RpcConstant.DEFAULT_SERVICE_VERSION);
+        serviceMetaInfo.setServiceHost("127.0.0.1");
+        serviceMetaInfo.setServicePort(8080);
+        
+        ServiceMetaInfo serviceMetaInfo2 = new ServiceMetaInfo();
+        serviceMetaInfo2.setServiceName("myService");
+        serviceMetaInfo2.setServiceVersion(RpcConstant.DEFAULT_SERVICE_VERSION);
+        serviceMetaInfo2.setServiceHost("127.0.0.1");
+        serviceMetaInfo2.setServicePort(8081);
+        
+        ServiceMetaInfo serviceMetaInfo3 = new ServiceMetaInfo();
+        serviceMetaInfo3.setServiceName("myService");
+        serviceMetaInfo3.setServiceVersion(RpcConstant.DEFAULT_SERVICE_VERSION);
+        serviceMetaInfo3.setServiceHost("127.0.0.1");
+        serviceMetaInfo3.setServicePort(8082);
+        
+        ServiceMetaInfo serviceMetaInfo4 = new ServiceMetaInfo();
+        serviceMetaInfo4.setServiceName("myService");
+        serviceMetaInfo4.setServiceVersion(RpcConstant.DEFAULT_SERVICE_VERSION);
+        serviceMetaInfo4.setServiceHost("127.0.0.1");
+        serviceMetaInfo4.setServicePort(8083);
+        
+        List<ServiceMetaInfo> serviceMetaInfoList = List.of(serviceMetaInfo,serviceMetaInfo2,serviceMetaInfo3,serviceMetaInfo4);
+        
+        LoadBalancer loadBalancer = LoadBalancerFactory.getInstance(LoadBalancerKeys.CONSISTENT_HASH);
+        ServiceMetaInfo select = loadBalancer.select(requestParams, serviceMetaInfoList);
+        System.out.println(select);
+        select = loadBalancer.select(requestParams, serviceMetaInfoList);
+        System.out.println(select);
+        select = loadBalancer.select(requestParams, serviceMetaInfoList);
+        System.out.println(select);
+        select = loadBalancer.select(requestParams, serviceMetaInfoList);
+        System.out.println(select);
+        select = loadBalancer.select(requestParams, serviceMetaInfoList);
+        System.out.println(select);
+        select = loadBalancer.select(requestParams, serviceMetaInfoList);
+        System.out.println(select);
         
     }
 }

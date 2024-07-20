@@ -1,5 +1,7 @@
 package com.doxita.config;
 
+import com.doxita.loadbalancer.LoadBalancer;
+import com.doxita.loadbalancer.LoadBalancerKeys;
 import com.doxita.rpc.serializer.SerializerKeys;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -46,4 +48,9 @@ public class RpcConfig {
      * 注册中心配置
      */
     private RegistryConfig registryConfig = new RegistryConfig();
+    
+    /**
+     * 负载均衡
+     */
+    private String loadBalancer = LoadBalancerKeys.ROUND_ROBIN;
 }

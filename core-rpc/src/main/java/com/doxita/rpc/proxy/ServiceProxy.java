@@ -4,6 +4,8 @@ import cn.hutool.core.util.IdUtil;
 import com.doxita.RpcApplication;
 import com.doxita.common.model.ServiceMetaInfo;
 import com.doxita.config.RpcConfig;
+import com.doxita.loadbalancer.LoadBalancer;
+import com.doxita.loadbalancer.LoadBalancerFactory;
 import com.doxita.rpc.model.RpcRequest;
 import com.doxita.rpc.model.RpcResponse;
 import com.doxita.rpc.protocol.*;
@@ -22,7 +24,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static com.doxita.constant.RpcConstant.DEFAULT_SERVICE_VERSION;
@@ -83,9 +87,15 @@ public Object invoke(Object proxy, Method method, Object[] args) {
         if (serviceMetaInfoList == null || serviceMetaInfoList.isEmpty()) {
             throw new RuntimeException("未发现服务");
         }
-        // 选择第一个服务提供者
-        // 随机选择一个, 选择第一个
-        ServiceMetaInfo selectedServiceInfo = serviceMetaInfoList.get(0);
+        
+        // 负载均衡选择节点
+        LoadBalancer loadBalancer = LoadBalancerFactory.getInstance(rpcConfig.getLoadBalancer());
+        Map<String , Object> requestParams = new HashMap<>();
+        // 添加请求参数作为hash值
+        requestParams.put("methodName",rpcRequest.getMethodName());
+        requestParams.put("args",rpcRequest.getArgs());
+        ServiceMetaInfo selectedServiceInfo = loadBalancer.select(requestParams, serviceMetaInfoList);
+        log.info("负载均衡选择节点：{}",selectedServiceInfo.getServiceNodeKey());
         
         // 发送请求
         RpcResponse rpcResponse = VertxTcpClient.dpRequest(rpcRequest, selectedServiceInfo);

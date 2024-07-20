@@ -1,0 +1,3 @@
+roundRobin=com.doxita.loadbalancer.RoundRobinLoadBalancer
+random=com.doxita.loadbalancer.RandomLoadBalancer
+consistentHash=com.doxita.loadbalancer.ConsistentHashLoadBalancer
