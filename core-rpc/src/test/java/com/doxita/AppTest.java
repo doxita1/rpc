@@ -3,10 +3,15 @@ package com.doxita;
 import cn.hutool.core.util.IdUtil;
 import com.doxita.common.model.ServiceMetaInfo;
 import com.doxita.constant.RpcConstant;
+import com.doxita.fault.retry.ExponentialBackOffRetryStrategy;
+import com.doxita.fault.retry.FixedIntervalRetryStrategy;
+import com.doxita.fault.retry.LinearGrowthRetryStrategy;
+import com.doxita.fault.retry.RetryStrategy;
 import com.doxita.loadbalancer.LoadBalancer;
 import com.doxita.loadbalancer.LoadBalancerFactory;
 import com.doxita.loadbalancer.LoadBalancerKeys;
 import com.doxita.rpc.model.RpcRequest;
+import com.doxita.rpc.model.RpcResponse;
 import com.doxita.rpc.protocol.*;
 import com.doxita.rpc.serializer.Serializer;
 import com.google.common.base.Charsets;
@@ -154,5 +159,15 @@ public class AppTest
         select = loadBalancer.select(requestParams, serviceMetaInfoList);
         System.out.println(select);
         
+    }
+    
+    public void testRetry() throws Exception {
+        RetryStrategy retryStrategy = new LinearGrowthRetryStrategy();
+        
+        RpcResponse rpcResponse = retryStrategy.doRetry(() -> {
+            System.out.println("hello");
+            throw new RuntimeException("hello");
+        });
+        System.out.println(rpcResponse);
     }
 }

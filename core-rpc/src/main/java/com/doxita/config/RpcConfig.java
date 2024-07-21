@@ -1,5 +1,6 @@
 package com.doxita.config;
 
+import com.doxita.fault.retry.RetryStrategyKeys;
 import com.doxita.loadbalancer.LoadBalancer;
 import com.doxita.loadbalancer.LoadBalancerKeys;
 import com.doxita.rpc.serializer.SerializerKeys;
@@ -53,4 +54,9 @@ public class RpcConfig {
      * 负载均衡
      */
     private String loadBalancer = LoadBalancerKeys.ROUND_ROBIN;
+    
+    /**
+     * 重试策略
+     */
+    private String retryStrategy = RetryStrategyKeys.NO_RETRY;
 }

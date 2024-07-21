@@ -1,0 +1,4 @@
+noRetry=com.doxita.fault.retry.NoRetryStrategy
+fixedInterval=com.doxita.fault.retry.FixedIntervalRetryStrategy
+linearGrowth=com.doxita.fault.retry.LinearGrowthRetryStrategy
+exponentialBackOff=com.doxita.fault.retry.ExponentialBackOffRetryStrategy
