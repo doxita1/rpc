@@ -40,7 +40,7 @@ public class VertxTcpClient {
     
         // 尝试连接服务提供者的主机和端口
         // 连接服务提供者
-        netClient.connect(serviceMetaInfo.getServicePort(), serviceMetaInfo.getServiceHost(), result -> {
+        netClient.connect(serviceMetaInfo.getServicePort(), "127.0.0.1", result -> {
             if (result.succeeded()) {
                 // 连接成功日志
                 log.info("TCP连接成功");
@@ -98,6 +98,8 @@ public class VertxTcpClient {
             } else {
                 // 连接失败日志
                 log.info("TCP连接失败");
+                log.info("连接失败原因：" + result.cause());
+                throw new RuntimeException("TCP连接失败");
             }
         });
         // 等待响应，通过get方法阻塞当前线程直到CompletableFuture完成

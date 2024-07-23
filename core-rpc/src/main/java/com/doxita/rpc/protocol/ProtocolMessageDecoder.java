@@ -25,15 +25,15 @@ public class ProtocolMessageDecoder {
     public static ProtocolMessage<?> decode(Buffer buffer) throws IOException, ClassNotFoundException {
         // 初始化协议头
         ProtocolMessage.Header header = new ProtocolMessage.Header();
-        // 读取并校验魔法数
-        byte magic = buffer.getByte(0);
-        
-        if (magic != ProtocolConstant.PROTOCOL_MAGIC){
-            throw new RuntimeException("magic error");
-        }
+        // todo 读取并校验魔法数
+//        byte magic = buffer.getByte(0);
+//
+//        if (magic != ProtocolConstant.PROTOCOL_MAGIC){
+//            throw new RuntimeException("magic error");
+//        }
         
         // 从Buffer中读取协议头的各个字段
-        header.setMagic(magic);
+        header.setMagic(buffer.getByte(0));
         header.setVersion(buffer.getByte(1));
         header.setType(buffer.getByte(2));
         header.setStatus(buffer.getByte(3));

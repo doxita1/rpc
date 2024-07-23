@@ -1,0 +1,2 @@
+failFast=com.doxita.fault.tolerant.FailFastTolerantStrategy
+failSafe=com.doxita.fault.tolerant.FailSafeTolerantStrategy

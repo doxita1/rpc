@@ -7,7 +7,7 @@ public class RetryStrategyFactory {
         SpiLoader.load(RetryStrategy.class);
     }
     
-    RetryStrategy DEFAULT_RETRY_STRATEGY = SpiLoader.getInstance(RetryStrategy.class, RetryStrategyKeys.NO_RETRY);
+    RetryStrategy DEFAULT_RETRY_STRATEGY = SpiLoader.getInstance(RetryStrategy.class, RetryStrategyKeys.LINEAR_GROWTH);
     public static RetryStrategy getInstance(String key){
         return SpiLoader.getInstance(RetryStrategy.class, key);
     }

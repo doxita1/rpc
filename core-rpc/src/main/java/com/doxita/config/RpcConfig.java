@@ -1,6 +1,7 @@
 package com.doxita.config;
 
 import com.doxita.fault.retry.RetryStrategyKeys;
+import com.doxita.fault.tolerant.TolerantStrategyKeys;
 import com.doxita.loadbalancer.LoadBalancer;
 import com.doxita.loadbalancer.LoadBalancerKeys;
 import com.doxita.rpc.serializer.SerializerKeys;
@@ -9,7 +10,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-
+/**
+ * @author Doxita
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -23,7 +26,7 @@ public class RpcConfig {
     /**
      * 服务端口
      */
-    private Integer serverPort = 8082;
+    private Integer serverPort = 8085;
     
     /**
      * 服务地址
@@ -58,5 +61,10 @@ public class RpcConfig {
     /**
      * 重试策略
      */
-    private String retryStrategy = RetryStrategyKeys.NO_RETRY;
+    private String retryStrategy = RetryStrategyKeys.LINEAR_GROWTH;
+    
+    /**
+     * 容错策略
+     */
+    private String tolerantStrategy = TolerantStrategyKeys.FAIL_SAFE;
 }

@@ -6,6 +6,8 @@ import com.doxita.common.model.ServiceMetaInfo;
 import com.doxita.config.RpcConfig;
 import com.doxita.fault.retry.RetryStrategy;
 import com.doxita.fault.retry.RetryStrategyFactory;
+import com.doxita.fault.tolerant.TolerantStrategy;
+import com.doxita.fault.tolerant.TolerantStrategyFactory;
 import com.doxita.loadbalancer.LoadBalancer;
 import com.doxita.loadbalancer.LoadBalancerFactory;
 import com.doxita.rpc.model.RpcRequest;
@@ -81,6 +83,7 @@ public class ServiceProxy implements InvocationHandler {
             // 构建服务元数据
             ServiceMetaInfo serviceMetaInfo = new ServiceMetaInfo();
             serviceMetaInfo.setServiceName(method.getDeclaringClass().getName());
+            serviceMetaInfo.setServicePort(rpcConfig.getServerPort());
             serviceMetaInfo.setServiceVersion(DEFAULT_SERVICE_VERSION);
             // 发现服务提供者
             // 发现服务
@@ -101,10 +104,17 @@ public class ServiceProxy implements InvocationHandler {
             
             // 发送请求
             RetryStrategy retryStrategy = RetryStrategyFactory.getInstance(rpcConfig.getRetryStrategy());
+            RpcResponse rpcResponse;
             // 重试策略
-            RpcResponse rpcResponse = retryStrategy.doRetry(() ->
-                    VertxTcpClient.dpRequest(rpcRequest, selectedServiceInfo)
-            );
+            try{
+                rpcResponse = retryStrategy.doRetry(() ->
+                        VertxTcpClient.dpRequest(rpcRequest, selectedServiceInfo)
+                );
+            }catch (Exception e){
+                TolerantStrategy tolerantStrategy = TolerantStrategyFactory.getInstance(rpcConfig.getTolerantStrategy());
+                rpcResponse = tolerantStrategy.doTolerant(new HashMap<>(), e);
+            }
+            
             // 处理响应中的异常
             if (rpcResponse.getException() != null) {
                 throw rpcResponse.getException();
